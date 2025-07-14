@@ -25,7 +25,7 @@ L = instaloader.Instaloader(
 print("🤖 Instaloader initialized")
 
 BOT_TOKEN = "6810197358:AAGuWZVyBoYLo9yrwbFUfGIhIAG6Zde8wP4"
-CHAT_ID = os.getenv("CHAT_ID")
+CHAT_ID = "-4779483833"
 IG_USERNAME = "djan.gooo__"
 IG_PASSWORD = "murodbro0604"
 SESSION_FILE = "ig_session"
