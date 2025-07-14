@@ -22,7 +22,7 @@ L = instaloader.Instaloader(
 )
 
 BOT_TOKEN = "6810197358:AAGuWZVyBoYLo9yrwbFUfGIhIAG6Zde8wP4"
-CHAT_ID = "-4779483833"
+# CHAT_ID = "-4779483833"
 IG_USERNAME = "djan.gooo__"
 IG_PASSWORD = "murodbro0604"
 SESSION_FILE = "ig_session"
@@ -40,7 +40,7 @@ def download_instagram_media(url: str):
     L.download_post(post, target=str(DOWNLOAD_ROOT))
 
 
-def send_file(path: Path):
+def send_file(path: Path, chat_id):
     suffix = path.suffix.lower()
     if suffix in {".jpg", ".jpeg", ".png"}:
         method, key = "sendPhoto", "photo"
@@ -54,7 +54,7 @@ def send_file(path: Path):
     with open(path, "rb") as fh:
         resp = requests.post(
             url,
-            data={"chat_id": CHAT_ID},
+            data={"chat_id": chat_id},
             files={key: fh},
         )
     resp.raise_for_status()
@@ -83,9 +83,6 @@ def webhook():
 
     chat_id = str(data.get("message", {}).get("chat", {}).get("id", ""))
     print(f"👤 Incoming chat_id: {chat_id}")
-    if chat_id != CHAT_ID:
-        print("⛔ chat_id mismatch, ignoring")
-        return "ok"
 
     text = data.get("message", {}).get("text", "")
     urls = re.findall(r"https?://www\.instagram\.com/[^\s]+", text)
@@ -103,14 +100,14 @@ def webhook():
         to_send = videos or [f for f in media_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
 
         for media in to_send:
-            send_file(media)
+            send_file(media, chat_id)
 
     except Exception as e:
         print(f"❗ Exception in webhook handler: {e}")
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             data={
-                "chat_id": CHAT_ID,
+                "chat_id": chat_id,
                 "text": f"❗ Error: {e}",
             },
         )
