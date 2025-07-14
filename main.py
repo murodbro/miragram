@@ -38,6 +38,7 @@ SESSION_FILE = "ig_session"
 
 def download_instagram_media(url: str):
     shortcode = urlparse(url).path.rstrip("/").split("/")[-1]
+    print(shortcode)
     post = instaloader.Post.from_shortcode(L.context, shortcode)
     L.download_post(post, target=str(DOWNLOAD_ROOT))
 
@@ -77,6 +78,7 @@ def home():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json(force=True)
+    print(data)
     chat_id = str(data.get("message", {}).get("chat", {}).get("id", ""))
     if chat_id != CHAT_ID:
         return "ok"
