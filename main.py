@@ -26,7 +26,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 IG_USERNAME = os.getenv("IG_USERNAME")
 IG_PASSWORD = os.getenv("IG_PASSWORD")
-SESSION_FILE = os.getenv("SESSION_FILE")
+SESSION_FILE = os.getenv("SESSION_FILE", "ig_session")
 
 
 if Path(SESSION_FILE).exists():
