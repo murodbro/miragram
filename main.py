@@ -29,11 +29,11 @@ IG_PASSWORD = "murodbro0604"
 SESSION_FILE = "ig_session"
 
 
-if Path(SESSION_FILE).exists():
-    L.load_session_from_file(IG_USERNAME, SESSION_FILE)
-else:
-    L.login(IG_USERNAME, IG_PASSWORD)
-    L.save_session_to_file(IG_USERNAME, SESSION_FILE)
+# if Path(SESSION_FILE).exists():
+#     L.load_session_from_file(IG_USERNAME, SESSION_FILE)
+# else:
+#     L.login(IG_USERNAME, IG_PASSWORD)
+#     L.save_session_to_file(IG_USERNAME, SESSION_FILE)
 
 
 def download_instagram_media(url: str):
