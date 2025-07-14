@@ -1,0 +1,6 @@
+.env
+.venv
+venv
+downloads
+ig_session
+*pycache*
