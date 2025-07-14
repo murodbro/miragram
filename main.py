@@ -69,6 +69,11 @@ def cleanup_downloads():
 app = Flask(__name__)
 
 
+@app.route("/", methods=["GET"])
+def home():
+    return {"ok": True}
+
+
 @app.route("/webhook/", methods=["POST"])
 def webhook():
     data = request.get_json(force=True)
