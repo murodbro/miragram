@@ -11,18 +11,15 @@ from flask import Flask, request
 from dotenv import load_dotenv
 
 load_dotenv()
-print("⚙️ Environment variables loaded")
 
 DOWNLOAD_ROOT = Path("downloads")
 DOWNLOAD_ROOT.mkdir(parents=True, exist_ok=True)
-print(f"📂 Download root is {DOWNLOAD_ROOT.resolve()}")
 
 L = instaloader.Instaloader(
     download_videos=True,
     save_metadata=False,
     quiet=True,
 )
-print("🤖 Instaloader initialized")
 
 BOT_TOKEN = "6810197358:AAGuWZVyBoYLo9yrwbFUfGIhIAG6Zde8wP4"
 CHAT_ID = "-4779483833"
@@ -39,10 +36,8 @@ SESSION_FILE = "ig_session"
 
 def download_instagram_media(url: str):
     shortcode = urlparse(url).path.rstrip("/").split("/")[-1]
-    print(f"📥 download_instagram_media: detected shortcode '{shortcode}'")
     post = instaloader.Post.from_shortcode(L.context, shortcode)
     L.download_post(post, target=str(DOWNLOAD_ROOT))
-    print(f"✅ Download complete for post '{shortcode}' into '{DOWNLOAD_ROOT}'")
 
 
 def send_file(path: Path):
@@ -67,7 +62,6 @@ def send_file(path: Path):
 
 
 def cleanup_downloads():
-    print(f"🧹 Cleaning up downloads folder '{DOWNLOAD_ROOT}'")
     shutil.rmtree(DOWNLOAD_ROOT)
     DOWNLOAD_ROOT.mkdir(exist_ok=True)
     print("✅ Cleanup complete")
@@ -94,7 +88,6 @@ def webhook():
         return "ok"
 
     text = data.get("message", {}).get("text", "")
-    print(f"✉️ Message text: {text}")
     urls = re.findall(r"https?://www\.instagram\.com/[^\s]+", text)
     print(f"🔗 Found URLs: {urls}")
     if not urls:
