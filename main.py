@@ -22,11 +22,11 @@ L = instaloader.Instaloader(
     quiet=True,
 )
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "6810197358:AAGuWZVyBoYLo9yrwbFUfGIhIAG6Zde8wP4"
 CHAT_ID = os.getenv("CHAT_ID")
-IG_USERNAME = os.getenv("IG_USERNAME")
-IG_PASSWORD = os.getenv("IG_PASSWORD")
-SESSION_FILE = os.getenv("SESSION_FILE", "ig_session")
+IG_USERNAME = "djan.gooo__"
+IG_PASSWORD = "murodbro0604"
+SESSION_FILE = "ig_session"
 
 
 if Path(SESSION_FILE).exists():
