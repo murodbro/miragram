@@ -74,7 +74,7 @@ def home():
     return {"ok": True}
 
 
-@app.route("/webhook/", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json(force=True)
     chat_id = str(data.get("message", {}).get("chat", {}).get("id", ""))
