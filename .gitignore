@@ -4,3 +4,4 @@ venv
 downloads
 ig_session
 *pycache*
+Pipfile*

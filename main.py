@@ -1,109 +1,89 @@
-import os
 import re
-import shutil
+import logging
 import requests
-import instaloader
-
-from pathlib import Path
 from urllib.parse import urlparse
-from flask import Flask, request
 
+from flask import Flask, request
 from dotenv import load_dotenv
+
+from config import BOT_TOKEN, DATABASE_URL, DOWNLOAD_ROOT
+from models import db
+from helpers import (
+    download_instagram_media,
+    send_cached,
+    upload_and_cache,
+    cleanup_downloads,
+)
 
 load_dotenv()
 
-DOWNLOAD_ROOT = Path("downloads")
-DOWNLOAD_ROOT.mkdir(parents=True, exist_ok=True)
-
-L = instaloader.Instaloader(
-    download_videos=True,
-    save_metadata=False,
-    quiet=True,
-)
-
-BOT_TOKEN = "6810197358:AAGuWZVyBoYLo9yrwbFUfGIhIAG6Zde8wP4"
-# CHAT_ID = "-4779483833"
-IG_USERNAME = "djan.gooo__"
-IG_PASSWORD = "murodbro0604"
-SESSION_FILE = "ig_session"
-
-# if Path(SESSION_FILE).exists():
-#     L.load_session_from_file(IG_USERNAME, SESSION_FILE)
-# else:
-#     L.login(IG_USERNAME, IG_PASSWORD)
-#     L.save_session_to_file(IG_USERNAME, SESSION_FILE)
-
-
-def download_instagram_media(url: str):
-    shortcode = urlparse(url).path.rstrip("/").split("/")[-1]
-    post = instaloader.Post.from_shortcode(L.context, shortcode)
-    L.download_post(post, target=str(DOWNLOAD_ROOT))
-
-
-def send_file(path: Path, chat_id):
-    suffix = path.suffix.lower()
-    if suffix in {".jpg", ".jpeg", ".png"}:
-        method, key = "sendPhoto", "photo"
-    elif suffix in {".mp4", ".mov"}:
-        method, key = "sendVideo", "video"
-    else:
-        method, key = "sendDocument", "document"
-
-    print(f"📤 send_file: sending '{path.name}' as {method}")
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
-    with open(path, "rb") as fh:
-        resp = requests.post(
-            url,
-            data={"chat_id": chat_id},
-            files={key: fh},
-        )
-    resp.raise_for_status()
-    print(f"✅ Sent '{path.name}' successfully")
-
-
-def cleanup_downloads():
-    shutil.rmtree(DOWNLOAD_ROOT)
-    DOWNLOAD_ROOT.mkdir(exist_ok=True)
-    print("✅ Cleanup complete")
-
-
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s:%(name)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+with app.app_context():
+    db.create_all()
 
 
 @app.route("/", methods=["GET"])
 def home():
-    print("🔍 Received health check")
+    logger.info("Health check received")
     return {"ok": True}
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json(force=True)
-    print("🌐 Webhook received data:", data)
-
+    logger.info(f"Received webhook data: {data}")
     chat_id = str(data.get("message", {}).get("chat", {}).get("id", ""))
-    print(f"👤 Incoming chat_id: {chat_id}")
-
     text = data.get("message", {}).get("text", "")
     urls = re.findall(r"https?://www\.instagram\.com/[^\s]+", text)
-    print(f"🔗 Found URLs: {urls}")
+
     if not urls:
-        print("⚠️ No Instagram URLs, ignoring")
+        logger.info("No Instagram URLs found; ignoring")
+        return "ok"
+
+    shortcode = urlparse(urls[-1]).path.rstrip("/").split("/")[-1]
+    logger.info(f"Processing shortcode: {shortcode}")
+
+    load_resp = requests.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Yuklanmoqda..."}
+    )
+    load_resp.raise_for_status()
+    loading_message_id = load_resp.json()["result"]["message_id"]
+
+    if send_cached(shortcode, chat_id):
+        logger.info(f"Sent cached media for {shortcode} to chat {chat_id}")
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
+            json={"chat_id": chat_id, "message_id": loading_message_id},
+        )
         return "ok"
 
     try:
         download_instagram_media(urls[-1])
+        media_files = list(DOWNLOAD_ROOT.iterdir())
+        logger.info(f"Downloaded media files: {[f.name for f in media_files]}")
 
-        media_files = [f for f in DOWNLOAD_ROOT.iterdir() if f.is_file()]
-        print(f"🎞️ Media files to send: {[f.name for f in media_files]}")
         videos = [f for f in media_files if f.suffix.lower() in (".mp4", ".mov")]
         to_send = videos or [f for f in media_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
 
         for media in to_send:
-            send_file(media, chat_id)
+            upload_and_cache(media, shortcode, chat_id)
+            logger.info(f"Uploaded and cached file: {media.name}")
+
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
+            json={"chat_id": chat_id, "message_id": loading_message_id},
+        )
 
     except Exception as e:
-        print(f"❗ Exception in webhook handler: {e}")
+        logger.error(f"Error handling webhook for {shortcode}: {e}", exc_info=True)
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             data={
@@ -113,11 +93,11 @@ def webhook():
         )
     finally:
         cleanup_downloads()
+        logger.info("Cleaned up downloads")
 
-    print("🔚 Webhook handling complete")
     return "ok"
 
 
 if __name__ == "__main__":
-    print("🚀 Starting Flask app on http://0.0.0.0:5005")
+    logger.info("Starting Flask app on http://0.0.0.0:5005")
     app.run(host="0.0.0.0", port=5005)
