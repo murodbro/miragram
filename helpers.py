@@ -67,8 +67,12 @@ def upload_and_cache(path: Path, shortcode: str, chat_id):
             files={key: fh},
         )
     resp.raise_for_status()
-    result = resp.json()["result"][key]
-    cache_file_id(shortcode, media_type, result["file_id"])
+    result = resp.json()["result"]
+    if media_type == "photo":
+        file_id = result["photo"][-1]["file_id"]
+    else:
+        file_id = result["video"]["file_id"]
+    cache_file_id(shortcode, media_type, file_id)
 
 
 def cleanup_downloads():
