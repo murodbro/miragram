@@ -1,3 +1,4 @@
+import os
 import re
 import logging
 import requests
@@ -99,5 +100,6 @@ def webhook():
 
 
 if __name__ == "__main__":
-    logger.info("Starting Flask app on http://0.0.0.0:5005")
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    logger.info(f"Starting Flask app on http://0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port)
