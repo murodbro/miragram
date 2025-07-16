@@ -3,7 +3,7 @@ from pathlib import Path
 from instaloader import Instaloader
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")

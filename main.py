@@ -16,7 +16,7 @@ from helpers import (
     cleanup_downloads,
 )
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
@@ -42,6 +42,7 @@ def webhook():
     data = request.get_json(force=True)
     logger.info(f"Received webhook data: {data}")
     chat_id = str(data.get("message", {}).get("chat", {}).get("id", ""))
+    user_info = data.get("message", {}).get("from", {})
     text = data.get("message", {}).get("text", "")
     urls = re.findall(r"https?://www\.instagram\.com/[^\s]+", text)
 
@@ -58,7 +59,7 @@ def webhook():
     load_resp.raise_for_status()
     loading_message_id = load_resp.json()["result"]["message_id"]
 
-    if send_cached(shortcode, chat_id):
+    if send_cached(shortcode, chat_id, user_info):
         logger.info(f"Sent cached media for {shortcode} to chat {chat_id}")
         requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
@@ -75,7 +76,7 @@ def webhook():
         to_send = videos or [f for f in media_files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
 
         for media in to_send:
-            upload_and_cache(media, shortcode, chat_id)
+            upload_and_cache(media, shortcode, chat_id, user_info)
             logger.info(f"Uploaded and cached file: {media.name}")
 
         requests.post(
@@ -102,4 +103,4 @@ def webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     logger.info(f"Starting Flask app on http://0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
