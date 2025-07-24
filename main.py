@@ -55,7 +55,8 @@ def webhook():
     logger.info(f"Processing shortcode: {shortcode}")
 
     load_resp = requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Yuklanmoqda..."}
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        json={"chat_id": chat_id, "text": "Yuklanmoqda..."},
     )
     load_resp.raise_for_status()
     loading_message_id = load_resp.json()["result"]["message_id"]

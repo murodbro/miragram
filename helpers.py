@@ -2,7 +2,7 @@ import logging
 import shutil
 import requests
 import subprocess
-import imageio  # pip install imageio imageio-ffmpeg
+import imageio
 
 from pathlib import Path
 from urllib.parse import urlparse
@@ -10,16 +10,12 @@ from instaloader import Post
 
 from config import L, BOT_TOKEN, DOWNLOAD_ROOT
 from models import Media, db
-from user_agent import generate_user_agent
 
 
 logger = logging.getLogger(__name__)
 
 
 def download_instagram_media(url: str):
-    user_agent = generate_user_agent()
-    L.context._session.headers.update({"User-Agent": user_agent})
-
     shortcode = urlparse(url).path.rstrip("/").split("/")[-1]
     post = Post.from_shortcode(L.context, shortcode)
     L.download_post(post, target=str(DOWNLOAD_ROOT))
